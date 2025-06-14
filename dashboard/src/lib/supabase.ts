@@ -32,6 +32,7 @@ export interface Tweet {
   tweet_summary?: string
   worth_posting_score?: number
   worth_posting_comment?: string
+  tools_mentioned?: string[]
   
   // Engagement metrics
   favourite_count?: number

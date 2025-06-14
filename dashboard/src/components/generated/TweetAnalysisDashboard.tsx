@@ -11,9 +11,14 @@ import AIResponsePanel from "./AIResponsePanel";
 import DashboardHomePage from "./DashboardHomePage";
 import TweetDatabaseTable from "./TweetDatabaseTable";
 import ReadyToRepostTable from "./ReadyToRepostTable";
+import OrdersTable, { Order } from "./OrdersTable";
+import SimilarTweetsPanel from "./SimilarTweetsPanel";
+import { supabase } from "@/lib/supabase";
+
 export interface TweetAnalysisDashboardProps {
   userName?: string;
 }
+
 export default function TweetAnalysisDashboard({
   userName = "User"
 }: TweetAnalysisDashboardProps) {
@@ -25,27 +30,74 @@ export default function TweetAnalysisDashboard({
     summary: string;
     tweetType: "Long Thread" | "Standalone";
   } | null>(null);
+  const [orders, setOrders] = React.useState<Order[]>([]);
   const [activeNavItem, setActiveNavItem] = React.useState<"home" | "submit" | "database" | "repost">("home");
-  const handleTweetSubmit = async (url: string) => {
-    setIsAnalyzing(true);
-    setAnalysisData(null);
 
-    // Simulate API call
-    setTimeout(() => {
-      setAnalysisData({
-        categoryTags: ["Marketing", "Technology", "Social Media"],
-        summary: "This tweet discusses the latest trends in social media marketing and how businesses can leverage new platform features to increase engagement with their target audience.",
-        tweetType: "Standalone"
+  const [duplicateTweet, setDuplicateTweet] = React.useState<string | null>(null);
+  const [authorTweets, setAuthorTweets] = React.useState<string[]>([]);
+
+  const handleTweetSubmit = async (url: string) => {
+    setOrders(prevOrders => [...prevOrders, { url, status: "Analyzing" }]);
+    setIsAnalyzing(true);
+    
+    try {
+      const response = await fetch('https://growlark.app.n8n.cloud/webhook/5f875500-1dcc-452e-a424-e63bcf20e05b', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
       });
-      setIsAnalyzing(false);
-    }, 2000);
+
+      if (response.ok) {
+        // Assuming the webhook returns some data to display, but for now, we'll just mark it as analyzed.
+        // const data = await response.json(); 
+        // setAnalysisData(data);
+        setOrders(prevOrders => prevOrders.map(order => order.url === url ? { ...order, status: "Analyzed" } : order));
+      } else {
+        setOrders(prevOrders => prevOrders.map(order => order.url === url ? { ...order, status: "Failed" } : order));
+      }
+    } catch (error) {
+        console.error("Error submitting tweet for analysis:", error);
+        setOrders(prevOrders => prevOrders.map(order => order.url === url ? { ...order, status: "Failed" } : order));
+    } finally {
+        const newOrders = orders.map(order => order.url === url ? { ...order, status: "Analyzed" } : order)
+        if (!newOrders.some(o => o.status === 'Analyzing')) {
+          setIsAnalyzing(false);
+        }
+    }
   };
+
+  const handleSimilarityCheck = async (url: string) => {
+    setDuplicateTweet(null);
+    setAuthorTweets([]);
+
+    try {
+      const urlParts = url.match(/^https:\/\/(twitter|x)\.com\/([a-zA-Z0-9_]+)\/status\/(\d+)/);
+      if (!urlParts) return;
+
+      const username = urlParts[2];
+      const tweetId = urlParts[3];
+
+      // 1. Check for exact duplicate
+      const { data: duplicate } = await supabase.from('tweets').select('tweet_url').eq('tweet_id', tweetId).single();
+      if (duplicate) setDuplicateTweet(duplicate.tweet_url);
+
+      // 2. Check for same author
+      const { data: author } = await supabase.from('tweets').select('tweet_url').eq('author_username', username).neq('tweet_id', tweetId).order('tweet_created_at', { ascending: false }).limit(4);
+      if (author) setAuthorTweets(author.map(t => t.tweet_url));
+
+    } catch (error) {
+      console.error("Error checking for similar tweets:", error);
+    }
+  };
+
   const handleNavigation = (item: "home" | "submit" | "database" | "repost" | "settings" | "help") => {
     if (item === "home" || item === "submit" || item === "database" || item === "repost") {
       setActiveNavItem(item);
     }
-    // Handle other navigation items as needed
   };
+
   return <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <aside className={cn("flex-shrink-0 transition-all duration-300", isMobile ? "fixed inset-y-0 left-0 z-50" : "relative")}>
@@ -74,14 +126,25 @@ export default function TweetAnalysisDashboard({
                 <DashboardHomePage />
               </section>}
             {activeNavItem === "submit" && <>
-                <section aria-labelledby="tweet-input-heading">
-                  <h2 id="tweet-input-heading" className="text-2xl font-bold mb-4">Submit Tweet</h2>
-                  <TweetInputCard value={tweetUrl} onValueChange={setTweetUrl} onSubmit={handleTweetSubmit} isLoading={isAnalyzing} />
-                </section>
-                <section aria-labelledby="ai-response-heading">
-                  <h2 id="ai-response-heading" className="text-2xl font-bold mb-4 mt-8">AI Analysis</h2>
-                  <AIResponsePanel categoryTags={analysisData?.categoryTags} summary={analysisData?.summary} tweetType={analysisData?.tweetType} isLoading={isAnalyzing} hasData={!!analysisData} />
-                </section>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                  <div className="lg:col-span-2 space-y-8">
+                    <section aria-labelledby="tweet-input-heading">
+                      <h2 id="tweet-input-heading" className="text-2xl font-bold mb-4">Submit Tweet</h2>
+                      <TweetInputCard value={tweetUrl} onValueChange={setTweetUrl} onSubmit={handleTweetSubmit} onValidUrl={handleSimilarityCheck} />
+                    </section>
+                    <section aria-labelledby="orders-heading">
+                      <OrdersTable orders={orders} onShowResults={() => handleNavigation("database")} />
+                    </section>
+                    <section aria-labelledby="ai-response-heading">
+                      <h2 id="ai-response-heading" className="text-2xl font-bold mb-4 mt-8">AI Analysis</h2>
+                      <AIResponsePanel categoryTags={analysisData?.categoryTags} summary={analysisData?.summary} tweetType={analysisData?.tweetType} isLoading={isAnalyzing && !analysisData} hasData={!!analysisData} />
+                    </section>
+                  </div>
+                  <aside className="lg:col-span-1 space-y-8">
+                    {duplicateTweet && <SimilarTweetsPanel title="⚠️ Exact Duplicate Found" urls={[duplicateTweet]} />}
+                    <SimilarTweetsPanel title="More From This Author" urls={authorTweets} />
+                  </aside>
+                </div>
               </>}
             {activeNavItem === "database" && <section aria-labelledby="tweet-database-heading">
                 <h2 id="tweet-database-heading" className="sr-only">Tweet Database</h2>

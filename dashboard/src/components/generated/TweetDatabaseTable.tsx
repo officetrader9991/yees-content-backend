@@ -8,9 +8,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Download, MessageSquare, Loader2, ExternalLink, Heart, Eye } from "lucide-react";
+import { Search, Filter, Download, MessageSquare, Loader2, ExternalLink, Heart, Eye, Trash2, FileText, Clapperboard, Mic } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase, Tweet } from "@/lib/supabase";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface TweetDatabaseTableProps {
   className?: string;
@@ -24,6 +26,7 @@ export default function TweetDatabaseTable({
   const [tweets, setTweets] = React.useState<Tweet[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [selectedRows, setSelectedRows] = React.useState<string[]>([]);
 
   // Fetch tweets from Supabase
   React.useEffect(() => {
@@ -56,6 +59,43 @@ export default function TweetDatabaseTable({
     }
   };
 
+  const handleRemoveSelected = async () => {
+    if (selectedRows.length === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from('tweets')
+        .delete()
+        .in('id', selectedRows);
+
+      if (error) {
+        console.error("Error deleting tweets:", error);
+        // You might want to show a notification to the user here
+      } else {
+        // Refresh data and clear selection
+        fetchTweets();
+        setSelectedRows([]);
+      }
+    } catch (err) {
+      console.error("Error:", err);
+    }
+  };
+
+  const chunk = <T,>(arr: T[] = [], size: number): T[][] =>
+    Array.from({ length: Math.ceil((arr || []).length / size) }, (v, i) =>
+      arr.slice(i * size, i * size + size)
+    );
+
+  const formatCommentForTooltip = (comment: string | null | undefined) => {
+    if (!comment) return "No comment available.";
+    const words = comment.split(' ');
+    const lines = [];
+    for (let i = 0; i < words.length; i += 10) {
+      lines.push(words.slice(i, i + 10).join(' '));
+    }
+    return lines.map((line, index) => <div key={index}>{line}</div>);
+  };
+
   // Function to convert snake_case to Title Case
   const formatCategoryName = (category: string) => {
     if (typeof category !== 'string') {
@@ -79,6 +119,22 @@ export default function TweetDatabaseTable({
 
     return matchesSearch && matchesCategory;
   });
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedRows(filteredTweets.map(t => t.id));
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  const handleRowSelect = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedRows(prev => [...prev, id]);
+    } else {
+      setSelectedRows(prev => prev.filter(rowId => rowId != id));
+    }
+  };
 
   // Get unique categories for filter, handling arrays
   const categories = ["all", ...Array.from(new Set(
@@ -130,6 +186,24 @@ export default function TweetDatabaseTable({
         <h1 className="text-3xl font-bold text-gray-900">Tweet Database</h1>
         <p className="text-gray-600">Manage and explore all analyzed tweets in your database.</p>
       </header>
+
+      {selectedRows.length > 0 && (
+        <div className="flex items-center gap-4 p-4 bg-gray-100 rounded-lg">
+          <span className="text-sm font-semibold">{selectedRows.length} selected</span>
+          <Button variant="destructive" size="sm" className="gap-2" onClick={handleRemoveSelected}>
+            <Trash2 className="h-4 w-4" /> Remove
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => console.log("Create SEO Articles for:", selectedRows)}>
+            <FileText className="h-4 w-4" /> Create SEO Articles
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => console.log("Create Threads Post for:", selectedRows)}>
+            <Clapperboard className="h-4 w-4" /> Create Threads Post
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => console.log("Create Voiceover for:", selectedRows)}>
+            <Mic className="h-4 w-4" /> Create Voiceover
+          </Button>
+        </div>
+      )}
 
       {/* Controls */}
       <section className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -189,127 +263,131 @@ export default function TweetDatabaseTable({
         animate={{ opacity: 1, y: 0 }} 
         transition={{ duration: 0.4 }}
       >
-        <Card>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-gray-900 min-w-[120px]">Scraped Date</TableHead>
-                    <TableHead className="font-semibold text-gray-900 min-w-[350px]">Tweet Text</TableHead>
-                    <TableHead className="font-semibold text-gray-900 min-w-[100px]">Score</TableHead>
-                    <TableHead className="font-semibold text-gray-900 min-w-[250px]">Summary</TableHead>
-                    <TableHead className="font-semibold text-gray-900 min-w-[120px]">Author</TableHead>
-                    <TableHead className="font-semibold text-gray-900 min-w-[150px]">Category</TableHead>
-                    <TableHead className="font-semibold text-gray-900 min-w-[100px]">Tweet URL</TableHead>
-                    <TableHead className="font-semibold text-gray-900 min-w-[120px]">Likes/Views</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTweets.map((tweet, index) => (
-                    <motion.tr 
-                      key={tweet.id} 
-                      initial={{ opacity: 0, y: 10 }} 
-                      animate={{ opacity: 1, y: 0 }} 
-                      transition={{ duration: 0.2, delay: index * 0.02 }}
-                      className="group hover:bg-gray-50 transition-colors"
-                    >
-                      {/* 1. Scraped Date */}
-                      <TableCell className="py-4 text-sm text-gray-600">
-                        {tweet.scraped_at ? new Date(tweet.scraped_at).toLocaleDateString() : 'N/A'}
-                      </TableCell>
-
-                      {/* 2. Tweet Text */}
-                      <TableCell className="py-4">
-                        <div className="max-w-sm">
-                          <p className="text-sm text-gray-900 break-words whitespace-normal leading-relaxed">
-                            {tweet.first_tweet_text || 'No content'}
-                          </p>
-                        </div>
-                      </TableCell>
-
-                      {/* 3. Score */}
-                      <TableCell className="py-4 text-center">
-                        {tweet.worth_posting_score ? (
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-sm font-medium">
-                            {tweet.worth_posting_score}
-                          </Badge>
-                        ) : (
-                          <span className="text-gray-400 italic text-sm">No score</span>
-                        )}
-                      </TableCell>
-
-                      {/* 4. Summary */}
-                      <TableCell className="py-4">
-                        <div className="max-w-xs">
-                          <p className="text-sm text-gray-600 break-words whitespace-normal leading-relaxed">
-                            {tweet.tweet_summary || 'No summary'}
-                          </p>
-                        </div>
-                      </TableCell>
-
-                      {/* 5. Author */}
-                      <TableCell className="py-4">
-                        <span className="font-medium text-blue-600 text-sm">
-                          @{tweet.author_username || 'unknown'}
-                        </span>
-                      </TableCell>
-
-                      {/* 6. Category */}
-                      <TableCell className="py-4">
-                        {tweet.category ? (
-                          (Array.isArray(tweet.category) ? tweet.category : [tweet.category]).map(cat =>
-                            <Badge key={cat} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-sm mb-1 mr-1">
-                              {formatCategoryName(cat)}
+        <TooltipProvider>
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="w-[50px]">
+                        <Checkbox 
+                          checked={selectedRows.length > 0 && selectedRows.length === filteredTweets.length}
+                          onCheckedChange={handleSelectAll}
+                        />
+                      </TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[120px]">Scraped Date</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[350px]">Tweet Text</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[100px]">Score</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[250px]">Summary</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[150px]">Tools Mentioned</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[120px]">Author</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[150px]">Category</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[120px]">Likes/Views</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[100px]">Tweet URL</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTweets.map((tweet) => (
+                      <TableRow key={tweet.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedRows.includes(tweet.id)}
+                            onCheckedChange={(checked) => handleRowSelect(tweet.id, !!checked)}
+                          />
+                        </TableCell>
+                        <TableCell>{tweet.scraped_at ? new Date(tweet.scraped_at).toLocaleDateString() : 'N/A'}</TableCell>
+                        <TableCell className="max-w-[350px] whitespace-normal">{tweet.first_tweet_text}</TableCell>
+                        <TableCell>
+                          {tweet.worth_posting_score != null ? (
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <Badge 
+                                  variant={tweet.worth_posting_score > 8 ? "default" : "secondary"}
+                                  className={cn(
+                                    {'bg-green-600 text-white': tweet.worth_posting_score > 8},
+                                    {'rainbow-glow-animation': tweet.worth_posting_score > 9}
+                                  )}
+                                >
+                                  {tweet.worth_posting_score}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {formatCommentForTooltip(tweet.worth_posting_comment)}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            'N/A'
+                          )}
+                        </TableCell>
+                        <TableCell className="max-w-[250px] whitespace-normal">{tweet.tweet_summary || 'N/A'}</TableCell>
+                        <TableCell>
+                          {chunk(tweet.tools_mentioned, 3).map((toolChunk, index) => (
+                            <div key={index} className="flex flex-wrap gap-1 mb-1 last:mb-0">
+                              {toolChunk.map(tool => (
+                                <Badge key={tool} variant="secondary">{tool}</Badge>
+                              ))}
+                            </div>
+                          ))}
+                        </TableCell>
+                        <TableCell>{tweet.author_username}</TableCell>
+                        <TableCell>
+                          {Array.isArray(tweet.category) ? (
+                            chunk(tweet.category, 3).map((catChunk, index) => (
+                              <div key={index} className="flex flex-wrap gap-1 mb-1 last:mb-0">
+                                {catChunk.map(cat => (
+                                  <Badge key={cat} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-sm">
+                                    {formatCategoryName(cat)}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ))
+                          ) : (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-sm">
+                              {formatCategoryName(tweet.category || '')}
                             </Badge>
-                          )
-                        ) : (
-                          <span className="text-gray-400 italic text-sm">No category</span>
-                        )}
-                      </TableCell>
-
-                      {/* 7. Tweet URL */}
-                      <TableCell className="py-4">
-                        {tweet.tweet_url ? (
-                          <Button variant="outline" size="sm" asChild className="h-8 text-xs">
-                            <a href={tweet.tweet_url} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-3 w-3 mr-1" />
-                              View Tweet
-                            </a>
-                          </Button>
-                        ) : (
-                          <span className="text-gray-400 italic text-xs">No URL</span>
-                        )}
-                      </TableCell>
-
-                      {/* 8. Likes/Views */}
-                      <TableCell className="py-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-sm">
-                            <Heart className="h-3 w-3 text-red-500" />
-                            <span className="font-medium">{tweet.favourite_count?.toLocaleString() || 0}</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-1 text-sm">
+                              <Heart className="h-3 w-3 text-red-500" />
+                              <span className="font-medium">{tweet.favourite_count?.toLocaleString() || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-sm">
+                              <Eye className="h-3 w-3 text-purple-500" />
+                              <span className="font-medium">{tweet.views?.toLocaleString() || 0}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1 text-sm">
-                            <Eye className="h-3 w-3 text-purple-500" />
-                            <span className="font-medium">{tweet.views?.toLocaleString() || 0}</span>
-                          </div>
-                        </div>
-                      </TableCell>
-                    </motion.tr>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            
-            {filteredTweets.length === 0 && (
-              <div className="text-center py-12">
-                <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No tweets found</h3>
-                <p className="text-gray-500">Try adjusting your search terms or category filter.</p>
+                        </TableCell>
+                        <TableCell>
+                          {tweet.tweet_url ? (
+                            <Button variant="outline" size="sm" asChild className="h-8 text-xs">
+                              <a href={tweet.tweet_url} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="h-3 w-3 mr-1" />
+                                View Tweet
+                              </a>
+                            </Button>
+                          ) : (
+                            <span className="text-gray-400 italic text-xs">No URL</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-            )}
-          </CardContent>
-        </Card>
+              
+              {filteredTweets.length === 0 && (
+                <div className="text-center py-12">
+                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No tweets found</h3>
+                  <p className="text-gray-500">Try adjusting your search terms or category filter.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TooltipProvider>
       </motion.div>
 
       {/* Pagination */}

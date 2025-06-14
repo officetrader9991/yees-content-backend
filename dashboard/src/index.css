@@ -141,3 +141,18 @@ body {
     padding: 0;
   }
 }
+
+@tailwind utilities;
+
+@keyframes rainbow-glow {
+  0% {
+    box-shadow: 0 0 5px #ff0000, 0 0 10px #ff7f00, 0 0 15px #ffff00, 0 0 20px #00ff00, 0 0 25px #0000ff, 0 0 30px #4b0082, 0 0 35px #8f00ff;
+  }
+  100% {
+    box-shadow: 0 0 5px #8f00ff, 0 0 10px #4b0082, 0 0 15px #0000ff, 0 0 20px #00ff00, 0 0 25px #ffff00, 0 0 30px #ff7f00, 0 0 35px #ff0000;
+  }
+}
+
+.rainbow-glow-animation {
+  animation: rainbow-glow 2s linear infinite alternate;
+}
