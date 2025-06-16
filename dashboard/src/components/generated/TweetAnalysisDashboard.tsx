@@ -14,6 +14,7 @@ import ReadyToRepostTable from "./ReadyToRepostTable";
 import OrdersTable, { Order } from "./OrdersTable";
 import SimilarTweetsPanel from "./SimilarTweetsPanel";
 import { supabase } from "@/lib/supabase";
+import TranslatorPage from "./TranslatorPage";
 
 export interface TweetAnalysisDashboardProps {
   userName?: string;
@@ -32,7 +33,7 @@ export default function TweetAnalysisDashboard({
     tweetType: "Long Thread" | "Standalone";
   } | null>(null);
   const [orders, setOrders] = React.useState<Order[]>([]);
-  const [activeNavItem, setActiveNavItem] = React.useState<"home" | "submit" | "database" | "repost">("home");
+  const [activeNavItem, setActiveNavItem] = React.useState<"home" | "submit" | "database" | "repost" | "seo-articles" | "threads" | "voiceover" | "translator">("home");
 
   const [duplicateTweet, setDuplicateTweet] = React.useState<string | null>(null);
   const [authorTweets, setAuthorTweets] = React.useState<string[]>([]);
@@ -110,8 +111,8 @@ export default function TweetAnalysisDashboard({
     }
   };
 
-  const handleNavigation = (item: "home" | "submit" | "database" | "repost" | "settings" | "help") => {
-    if (item === "home" || item === "submit" || item === "database" || item === "repost") {
+  const handleNavigation = (item: "home" | "submit" | "database" | "repost" | "settings" | "help" | "seo-articles" | "threads" | "voiceover" | "translator") => {
+    if (item === "home" || item === "submit" || item === "database" || item === "repost" || item === "seo-articles" || item === "threads" || item === "voiceover" || item === "translator") {
       setActiveNavItem(item);
     }
   };
@@ -183,6 +184,10 @@ export default function TweetAnalysisDashboard({
                 <h2 id="ready-to-repost-heading" className="sr-only">Ready to Re-post</h2>
                 <ReadyToRepostTable />
               </section>}
+            {activeNavItem === "translator" && <TranslatorPage />}
+            {activeNavItem === "seo-articles" && <h2 className="text-2xl font-bold">SEO Articles</h2>}
+            {activeNavItem === "threads" && <h2 className="text-2xl font-bold">Threads</h2>}
+            {activeNavItem === "voiceover" && <h2 className="text-2xl font-bold">Voiceover</h2>}
           </div>
         </motion.div>
       </main>

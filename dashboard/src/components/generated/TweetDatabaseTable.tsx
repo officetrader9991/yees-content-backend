@@ -120,6 +120,12 @@ export default function TweetDatabaseTable({
     'Expert': 'Expert 🦹',
   };
 
+  const discoveryCategoryDisplay: { [key: string]: string } = {
+    'Al News & Analysis': 'Al News & Analysis 📰',
+    'Tool Spotlights': 'Tool Spotlights 🌟',
+    'Prompt & Tricks Gallery': 'Prompt & Tricks Gallery 💬',
+  };
+
   const filteredTweets = tweets.filter(tweet => {
     const content = tweet.first_tweet_text || '';
     const author = tweet.author_username || '';
@@ -297,6 +303,7 @@ export default function TweetDatabaseTable({
                       <TableHead className="font-semibold text-gray-900 min-w-[250px]">Summary</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[200px]">Comment</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[150px]">Tools Mentioned</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[200px]">Discovery Category 🔍</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[150px]">Category</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[150px]">Target Audience</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[150px]">Difficulty</TableHead>
@@ -371,6 +378,11 @@ export default function TweetDatabaseTable({
                               ))}
                             </div>
                           ))}
+                        </TableCell>
+                        <TableCell>
+                          {tweet.discovery_category && (
+                            <span>{discoveryCategoryDisplay[tweet.discovery_category] || tweet.discovery_category}</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">

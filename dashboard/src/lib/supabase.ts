@@ -62,4 +62,5 @@ export interface Tweet {
   splendid_tweet?: boolean
   target_audience?: string[]
   difficulty?: string
+  discovery_category?: string
 } 
