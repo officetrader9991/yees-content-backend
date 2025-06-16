@@ -25,6 +25,7 @@ export default function TweetAnalysisDashboard({
   const isMobile = useIsMobile();
   const [tweetUrl, setTweetUrl] = React.useState("");
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
+  const [allCategories, setAllCategories] = React.useState<string[]>([]);
   const [analysisData, setAnalysisData] = React.useState<{
     categoryTags: string[];
     summary: string;
@@ -36,7 +37,24 @@ export default function TweetAnalysisDashboard({
   const [duplicateTweet, setDuplicateTweet] = React.useState<string | null>(null);
   const [authorTweets, setAuthorTweets] = React.useState<string[]>([]);
 
-  const handleTweetSubmit = async (url: string) => {
+  React.useEffect(() => {
+    const fetchCategories = async () => {
+      const { data, error } = await supabase.from('tweets').select('category');
+
+      if (error) {
+        console.error('Error fetching categories:', error);
+        return;
+      }
+
+      const allCategoryArrays = data.map(item => item.category).filter(Boolean);
+      const uniqueCategories = [...new Set(allCategoryArrays.flat())];
+      setAllCategories(uniqueCategories);
+    };
+
+    fetchCategories();
+  }, []);
+
+  const handleTweetSubmit = async (url: string, comment: string, categories: string[], isSplendid: boolean) => {
     setOrders(prevOrders => [...prevOrders, { url, status: "Analyzing" }]);
     setIsAnalyzing(true);
     
@@ -46,7 +64,7 @@ export default function TweetAnalysisDashboard({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, comment, categories, splendid_tweet: isSplendid }),
       });
 
       if (response.ok) {
@@ -130,7 +148,18 @@ export default function TweetAnalysisDashboard({
                   <div className="lg:col-span-2 space-y-8">
                     <section aria-labelledby="tweet-input-heading">
                       <h2 id="tweet-input-heading" className="text-2xl font-bold mb-4">Submit Tweet</h2>
-                      <TweetInputCard value={tweetUrl} onValueChange={setTweetUrl} onSubmit={handleTweetSubmit} onValidUrl={handleSimilarityCheck} />
+                      <TweetInputCard
+                        value={tweetUrl}
+                        onValueChange={setTweetUrl}
+                        onSubmit={(url, comment, categories, isSplendid) => handleTweetSubmit(url, comment, categories, isSplendid)}
+                        onValidUrl={handleSimilarityCheck}
+                        allCategories={allCategories}
+                        onNewCategory={ (newCategory: string) => {
+                          if (!allCategories.includes(newCategory)) {
+                            setAllCategories([...allCategories, newCategory]);
+                          }
+                        }}
+                      />
                     </section>
                     <section aria-labelledby="orders-heading">
                       <OrdersTable orders={orders} onShowResults={() => handleNavigation("database")} />

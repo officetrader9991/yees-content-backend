@@ -6,114 +6,158 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { TrendingUp, MessageSquare, Users, BarChart3, Calendar, Hash, Clock, ArrowUpRight } from "lucide-react";
+import { TrendingUp, MessageSquare, Users, BarChart3, Calendar, Hash, Clock, ArrowUpRight, Loader2 } from "lucide-react";
+import { supabase, Tweet } from "@/lib/supabase";
+import { formatDistanceToNow } from 'date-fns';
+import { Tweet as EmbeddedTweet } from 'react-tweet';
+
 export interface DashboardHomePageProps {
   className?: string;
 }
 export default function DashboardHomePage({
   className
 }: DashboardHomePageProps) {
-  // Mock data for dashboard stats
+  const [tweets, setTweets] = React.useState<Tweet[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const fetchTweets = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const { data, error } = await supabase
+          .from('tweets')
+          .select('*')
+          .order('scraped_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching tweets:', error);
+          setError('Failed to load tweet data.');
+          return;
+        }
+
+        setTweets(data || []);
+      } catch (err) {
+        console.error('Error:', err);
+        setError('An unexpected error occurred.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTweets();
+  }, []);
+
+  // Helper function to format category names
+  const formatCategoryName = (snakeCase: string) => {
+    if (!snakeCase) return "Uncategorized";
+    if (snakeCase.toLowerCase() === 'cta') return 'CTA';
+    return snakeCase
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  // Calculate stats from fetched data
+  const totalTweets = tweets.length;
+  const uniqueCategories = [...new Set(
+    tweets.flatMap(t => {
+      if (typeof t.category === 'string') {
+        return t.category.split(',').map(c => c.trim());
+      }
+      if (Array.isArray(t.category)) {
+        return t.category;
+      }
+      return [];
+    }).filter(Boolean)
+  )];
+  const activeCategoriesCount = uniqueCategories.length;
+  const readyToPostCount = tweets.filter(t => t.status === 'ready').length;
+  const thisWeekCount = tweets.filter(t => {
+    if (!t.scraped_at) return false;
+    const scrapedDate = new Date(t.scraped_at);
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    return scrapedDate > oneWeekAgo;
+  }).length;
+  
   const stats = [{
     title: "Total Tweets",
-    value: "2,847",
-    change: "+12.5%",
+    value: totalTweets.toLocaleString(),
+    change: "", // Dynamic change can be complex, keeping it simple for now
     trend: "up",
     icon: MessageSquare,
     color: "blue"
   }, {
     title: "Active Categories",
-    value: "24",
-    change: "+3",
+    value: activeCategoriesCount.toLocaleString(),
+    change: "",
     trend: "up",
     icon: Hash,
     color: "green"
   }, {
     title: "Ready to Post",
-    value: "156",
-    change: "+8.2%",
+    value: readyToPostCount.toLocaleString(),
+    change: "",
     trend: "up",
     icon: TrendingUp,
     color: "purple"
   }, {
-    title: "This Week",
-    value: "89",
-    change: "-2.1%",
-    trend: "down",
+    title: "Scraped This Week",
+    value: thisWeekCount.toLocaleString(),
+    change: "",
+    trend: "up",
     icon: Calendar,
     color: "orange"
   }];
 
-  // Mock data for category breakdown
-  const categories = [{
-    name: "Technology",
-    count: 847,
-    percentage: 30,
-    color: "bg-blue-500"
-  }, {
-    name: "Marketing",
-    count: 623,
-    percentage: 22,
-    color: "bg-green-500"
-  }, {
-    name: "Business",
-    count: 512,
-    percentage: 18,
-    color: "bg-purple-500"
-  }, {
-    name: "Social Media",
-    count: 398,
-    percentage: 14,
-    color: "bg-orange-500"
-  }, {
-    name: "AI & ML",
-    count: 284,
-    percentage: 10,
-    color: "bg-pink-500"
-  }, {
-    name: "Other",
-    count: 183,
-    percentage: 6,
-    color: "bg-gray-500"
-  }];
+  // Calculate category breakdown from fetched data
+  const categoryCounts = tweets.reduce((acc, tweet) => {
+    let cats: string[] = [];
+    if (typeof tweet.category === 'string') {
+      cats = tweet.category.split(',').map(c => c.trim());
+    } else if (Array.isArray(tweet.category)) {
+      cats = tweet.category;
+    }
 
-  // Mock data for recent tweets
-  const recentTweets = [{
-    id: 1,
-    content: "The future of AI in social media marketing is incredibly promising. New tools are emerging daily...",
-    author: "@techguru",
-    category: "Technology",
-    date: "2 hours ago",
-    status: "analyzed"
-  }, {
-    id: 2,
-    content: "Building a strong personal brand on Twitter requires consistency, authenticity, and value...",
-    author: "@marketingpro",
-    category: "Marketing",
-    date: "4 hours ago",
-    status: "ready"
-  }, {
-    id: 3,
-    content: "Remote work has fundamentally changed how we approach team collaboration and productivity...",
-    author: "@businessleader",
-    category: "Business",
-    date: "6 hours ago",
-    status: "analyzed"
-  }, {
-    id: 4,
-    content: "The latest updates to social media algorithms favor authentic engagement over vanity metrics...",
-    author: "@socialmedia",
-    category: "Social Media",
-    date: "8 hours ago",
-    status: "processing"
-  }, {
-    id: 5,
-    content: "Machine learning models are becoming more accessible to businesses of all sizes...",
-    author: "@aiexpert",
-    category: "AI & ML",
-    date: "12 hours ago",
-    status: "ready"
-  }];
+    cats.forEach(cat => {
+      if (cat) {
+        acc[cat] = (acc[cat] || 0) + 1;
+      }
+    });
+    return acc;
+  }, {} as Record<string, number>);
+
+  const categories = Object.entries(categoryCounts)
+    .map(([name, count]) => ({
+      name: formatCategoryName(name),
+      count,
+      percentage: Math.round((count / totalTweets) * 100) || 0,
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5); // Show top 5 categories
+
+  // Get recent tweets from fetched data
+  const recentTweets = tweets.slice(0, 5).map(tweet => {
+    let categories: string[] = [];
+    if (typeof tweet.category === 'string') {
+      categories = tweet.category.split(',').map(c => c.trim());
+    } else if (Array.isArray(tweet.category)) {
+      categories = tweet.category;
+    }
+
+    return {
+      id: tweet.id,
+      tweetId: tweet.tweet_id,
+      content: tweet.first_tweet_text || 'No content',
+      categories: categories.filter(Boolean).map(formatCategoryName),
+      date: tweet.scraped_at ? formatDistanceToNow(new Date(tweet.scraped_at), { addSuffix: true }) : 'Unknown date',
+      status: tweet.status || 'unknown'
+    };
+  });
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ready":
@@ -140,6 +184,30 @@ export default function DashboardHomePage({
         return "bg-gray-50 text-gray-600 border-gray-200";
     }
   };
+
+  if (loading) {
+    return (
+      <div className={cn("flex items-center justify-center min-h-[50vh]", className)}>
+        <div className="flex items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <span className="text-xl text-gray-600">Loading Dashboard Data...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={cn("flex items-center justify-center min-h-[50vh]", className)}>
+        <div className="text-center space-y-4 p-6 bg-red-50 border border-red-200 rounded-lg">
+           <h2 className="text-xl font-semibold text-red-800">Something went wrong</h2>
+           <p className="text-red-600">{error}</p>
+           <p className="text-gray-500 text-sm">Please check your connection and Supabase configuration.</p>
+        </div>
+      </div>
+    );
+  }
+
   return <div className={cn("space-y-8", className)}>
       {/* Page Header */}
       <header className="space-y-2">
@@ -148,6 +216,13 @@ export default function DashboardHomePage({
           Welcome back! Here's what's happening with your tweet analysis.
         </p>
       </header>
+
+      {/* Custom styles for embedded tweets */}
+      <style>{`
+        .tweet-container .react-tweet-theme {
+          font-size: 70% !important;
+        }
+      `}</style>
 
       {/* Stats Cards */}
       <section aria-labelledby="stats-heading">
@@ -179,11 +254,15 @@ export default function DashboardHomePage({
                       {stat.value}
                     </div>
                     <div className="flex items-center text-sm">
-                      <ArrowUpRight className={cn("h-4 w-4 mr-1", stat.trend === "up" ? "text-green-600" : "text-red-600 rotate-180")} />
-                      <span className={cn("font-medium", stat.trend === "up" ? "text-green-600" : "text-red-600")}>
-                        {stat.change}
-                      </span>
-                      <span className="text-gray-500 ml-1">from last month</span>
+                      {stat.change && (
+                        <>
+                          <ArrowUpRight className={cn("h-4 w-4 mr-1", stat.trend === "up" ? "text-green-600" : "text-red-600 rotate-180")} />
+                          <span className={cn("font-medium", stat.trend === "up" ? "text-green-600" : "text-red-600")}>
+                            {stat.change}
+                          </span>
+                          <span className="text-gray-500 ml-1">from last month</span>
+                        </>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -211,19 +290,17 @@ export default function DashboardHomePage({
                 <span>Category Breakdown</span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {categories.map((category, index) => <div key={category.name} className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-gray-900">{category.name}</span>
-                    <span className="text-gray-500">{category.count}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Progress value={category.percentage} className="flex-1 h-2" />
-                    <span className="text-sm font-medium text-gray-600 min-w-[3rem]">
-                      {category.percentage}%
-                    </span>
-                  </div>
-                </div>)}
+            <CardContent className="space-y-3">
+              {categories.length > 0 ? categories.map((category, index) => <div key={category.name} className="flex items-center gap-4 text-sm">
+                  <span className="font-medium text-gray-800 flex-1 truncate" title={category.name}>
+                    {category.name}
+                  </span>
+                  <span className="text-gray-500 w-8 text-right font-medium">{category.count}</span>
+                  <Progress value={category.percentage} className="w-24 h-2" />
+                  <span className="text-sm font-semibold text-gray-600 w-12 text-right">
+                    {category.percentage}%
+                  </span>
+                </div>) : <p className="text-sm text-gray-500">No category data available yet.</p>}
             </CardContent>
           </Card>
         </motion.section>
@@ -247,41 +324,38 @@ export default function DashboardHomePage({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {recentTweets.map((tweet, index) => <motion.article key={tweet.id} className="border-b border-gray-100 last:border-b-0 pb-4 last:pb-0" initial={{
-                opacity: 0,
-                y: 10
-              }} animate={{
-                opacity: 1,
-                y: 0
-              }} transition={{
-                duration: 0.2,
-                delay: 0.4 + index * 0.1
-              }}>
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <p className="text-gray-900 leading-relaxed flex-1 line-clamp-2">
-                          {tweet.content}
-                        </p>
-                        <Badge variant="outline" className={cn("text-xs", getStatusColor(tweet.status))}>
-                          {tweet.status}
-                        </Badge>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {recentTweets.length > 0 ? recentTweets.map((tweet, index) => <motion.div 
+                      key={tweet.id} 
+                      className="border rounded-lg overflow-hidden hover:bg-gray-50/50 transition-colors"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      <div className="p-4 flex justify-center flex-grow">
+                        <div className="w-full max-w-md tweet-container">
+                          {tweet.tweetId ? (
+                            <EmbeddedTweet id={tweet.tweetId} />
+                          ) : (
+                            <p className="text-sm text-gray-800">{tweet.content}</p>
+                          )}
+                        </div>
                       </div>
-                      
-                      <div className="flex items-center justify-between text-sm text-gray-500">
-                        <div className="flex items-center gap-4">
-                          <span className="font-medium">{tweet.author}</span>
-                          <Badge variant="secondary" className="text-xs">
-                            {tweet.category}
+                      <div className="mt-auto flex flex-col items-start gap-2 px-4 py-2 border-t bg-gray-50 text-xs text-gray-500">
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="h-3 w-3" />
+                          <span>Scraped: {tweet.date}</span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {tweet.categories.map(category => (
+                            <Badge key={category} variant="secondary">{category}</Badge>
+                          ))}
+                          <Badge className={cn("text-xs font-semibold", getStatusColor(tweet.status))}>
+                            {tweet.status}
                           </Badge>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          <span>{tweet.date}</span>
-                        </div>
                       </div>
-                    </div>
-                  </motion.article>)}
+                    </motion.div>) : <p className="text-sm text-gray-500">No recent tweets found.</p>}
               </div>
             </CardContent>
           </Card>

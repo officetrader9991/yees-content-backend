@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, Download, MessageSquare, Loader2, ExternalLink, Heart, Eye, Trash2, FileText, Clapperboard, Mic } from "lucide-react";
+import { Search, Filter, Download, MessageSquare, Loader2, ExternalLink, Heart, Eye, Trash2, FileText, Clapperboard, Mic, Star } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase, Tweet } from "@/lib/supabase";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -50,6 +50,7 @@ export default function TweetDatabaseTable({
         return;
       }
 
+      console.log("Fetched tweets data:", data);
       setTweets(data || []);
     } catch (err) {
       console.error('Error:', err);
@@ -105,6 +106,18 @@ export default function TweetDatabaseTable({
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
+  };
+
+  const audienceDisplay: { [key: string]: string } = {
+    'Designers': 'Designers 🎨',
+    'Developers': 'Developers 🧑‍💻',
+    'Marketers & Creators': 'Marketers & Creators 🦭',
+  };
+
+  const difficultyDisplay: { [key: string]: string } = {
+    'Beginner': 'Beginner 🔰',
+    'Amateur': 'Amateur 🤓',
+    'Expert': 'Expert 🦹',
   };
 
   const filteredTweets = tweets.filter(tweet => {
@@ -277,13 +290,17 @@ export default function TweetDatabaseTable({
                         />
                       </TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[120px]">Scraped Date</TableHead>
+                      <TableHead className="w-16 font-semibold text-gray-900">Splendid</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[120px]">Author</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[350px]">Tweet Text</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[100px]">Score</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[250px]">Summary</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[200px]">Comment</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[150px]">Tools Mentioned</TableHead>
-                      <TableHead className="font-semibold text-gray-900 min-w-[120px]">Author</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[150px]">Category</TableHead>
-                      <TableHead className="font-semibold text-gray-900 min-w-[120px]">Likes/Views</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[150px]">Target Audience</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[150px]">Difficulty</TableHead>
+                      <TableHead className="w-32 font-semibold text-gray-900 text-center">Engagement</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[100px]">Tweet URL</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -297,6 +314,30 @@ export default function TweetDatabaseTable({
                           />
                         </TableCell>
                         <TableCell>{tweet.scraped_at ? new Date(tweet.scraped_at).toLocaleDateString() : 'N/A'}</TableCell>
+                        <TableCell>
+                          {tweet.splendid_tweet && (
+                            <Star className="h-5 w-5 text-red-500 fill-red-500" />
+                          )}
+                        </TableCell>
+                        <TableCell className="font-medium text-gray-800">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <a
+                                  href={`https://twitter.com/${tweet.author_username}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="hover:underline"
+                                >
+                                  {tweet.author_username}
+                                </a>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>View Profile</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </TableCell>
                         <TableCell className="max-w-[350px] whitespace-normal">{tweet.first_tweet_text}</TableCell>
                         <TableCell>
                           {tweet.worth_posting_score != null ? (
@@ -321,6 +362,7 @@ export default function TweetDatabaseTable({
                           )}
                         </TableCell>
                         <TableCell className="max-w-[250px] whitespace-normal">{tweet.tweet_summary || 'N/A'}</TableCell>
+                        <TableCell className="max-w-[200px] whitespace-normal">{tweet.user_comment || ''}</TableCell>
                         <TableCell>
                           {chunk(tweet.tools_mentioned, 3).map((toolChunk, index) => (
                             <div key={index} className="flex flex-wrap gap-1 mb-1 last:mb-0">
@@ -330,32 +372,45 @@ export default function TweetDatabaseTable({
                             </div>
                           ))}
                         </TableCell>
-                        <TableCell>{tweet.author_username}</TableCell>
                         <TableCell>
-                          {Array.isArray(tweet.category) ? (
-                            chunk(tweet.category, 3).map((catChunk, index) => (
-                              <div key={index} className="flex flex-wrap gap-1 mb-1 last:mb-0">
-                                {catChunk.map(cat => (
-                                  <Badge key={cat} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-sm">
-                                    {formatCategoryName(cat)}
+                          <div className="flex flex-wrap gap-1">
+                            {Array.isArray(tweet.category)
+                              ? chunk(tweet.category, 2).map((categoryChunk, idx) => (
+                                  <div key={idx} className="flex flex-wrap gap-1">
+                                    {categoryChunk.map((cat, index) => (
+                                      <Badge key={index} variant="secondary" className="font-normal">
+                                        {formatCategoryName(cat)}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                ))
+                              : tweet.category && (
+                                  <Badge variant="secondary" className="font-normal">
+                                    {formatCategoryName(tweet.category)}
                                   </Badge>
-                                ))}
-                              </div>
-                            ))
-                          ) : (
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-sm">
-                              {formatCategoryName(tweet.category || '')}
-                            </Badge>
+                                )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            {tweet.target_audience?.map(audience => (
+                              <span key={audience}>{audienceDisplay[audience] || audience}</span>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {tweet.difficulty && (
+                            <span>{difficultyDisplay[tweet.difficulty] || tweet.difficulty}</span>
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1 text-sm">
-                              <Heart className="h-3 w-3 text-red-500" />
+                          <div className="flex justify-center items-center gap-3 text-sm">
+                            <div className="flex items-center gap-1">
+                              <Heart className="h-4 w-4 text-red-500" />
                               <span className="font-medium">{tweet.favourite_count?.toLocaleString() || 0}</span>
                             </div>
-                            <div className="flex items-center gap-1 text-sm">
-                              <Eye className="h-3 w-3 text-purple-500" />
+                            <div className="flex items-center gap-1">
+                              <Eye className="h-4 w-4 text-purple-500" />
                               <span className="font-medium">{tweet.views?.toLocaleString() || 0}</span>
                             </div>
                           </div>

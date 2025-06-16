@@ -2,12 +2,16 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Send, CheckCircle, AlertCircle } from "lucide-react";
+import { Send, CheckCircle, AlertCircle, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import Confetti from "react-confetti";
 
 declare global {
   interface Window {
@@ -18,10 +22,12 @@ declare global {
 export interface TweetInputCardProps {
   value?: string;
   onValueChange?: (value: string) => void;
-  onSubmit?: (url: string) => void;
+  onSubmit?: (url: string, comment: string, categories: string[], isSplendid: boolean) => void;
   isLoading?: boolean;
   disabled?: boolean;
   onValidUrl?: (url: string) => void;
+  allCategories?: string[];
+  onNewCategory?: (category: string) => void;
 }
 
 export default function TweetInputCard({
@@ -31,8 +37,17 @@ export default function TweetInputCard({
   isLoading = false,
   disabled = false,
   onValidUrl,
+  allCategories = [],
+  onNewCategory,
 }: TweetInputCardProps) {
   const [inputValue, setInputValue] = React.useState(value);
+  const [comment, setComment] = React.useState("");
+  const [selectedCategories, setSelectedCategories] = React.useState<string[]>([]);
+  const [isSplendid, setIsSplendid] = React.useState(false);
+  const [showConfetti, setShowConfetti] = React.useState(false);
+  const [isAddingCategory, setIsAddingCategory] = React.useState(false);
+  const [newCategory, setNewCategory] = React.useState("");
+  const [newCategoryError, setNewCategoryError] = React.useState("");
   const [submissionState, setSubmissionState] = React.useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = React.useState<string>("");
   const [tweetId, setTweetId] = React.useState<string | null>(null);
@@ -85,6 +100,42 @@ export default function TweetInputCard({
     }
   };
 
+  const handleNewCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/\s/.test(value)) {
+      setNewCategoryError("Spaces are not allowed.");
+    } else {
+      setNewCategoryError("");
+    }
+    setNewCategory(value.replace(/\s/g, ""));
+  };
+
+  const handleAddNewCategory = () => {
+    if (newCategory.trim() && !allCategories.includes(newCategory.trim())) {
+      onNewCategory?.(newCategory.trim());
+      setSelectedCategories((prev) => [...prev, newCategory.trim()]);
+    }
+    setNewCategory("");
+    setIsAddingCategory(false);
+    setNewCategoryError("");
+  };
+
+  const handleSplendidClick = () => {
+    const newIsSplendid = !isSplendid;
+    setIsSplendid(newIsSplendid);
+    if (newIsSplendid) {
+      setShowConfetti(true);
+    }
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategories((prevCategories) =>
+      prevCategories.includes(category)
+        ? prevCategories.filter((c) => c !== category)
+        : [...prevCategories, category]
+    );
+  };
+
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedText = e.clipboardData.getData("text");
@@ -105,7 +156,7 @@ export default function TweetInputCard({
       setErrorMessage("");
 
       try {
-        onSubmit?.(inputValue);
+        onSubmit?.(inputValue, comment, selectedCategories, isSplendid);
         setSubmissionState("success");
 
         setTimeout(() => {
@@ -162,6 +213,90 @@ export default function TweetInputCard({
                 autoCorrect="off"
                 autoCapitalize="off"
               />
+            </div>
+
+            <div className="space-y-3">
+              <Label htmlFor="comment" className="text-sm font-medium text-gray-700">
+                Your comment
+              </Label>
+              <Textarea
+                id="comment"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="Add your comment here..."
+                disabled={disabled || isSubmitting}
+                className="min-h-[100px] text-base"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-700">
+                Category
+              </Label>
+              <div className="flex flex-wrap gap-2 items-center">
+                {allCategories.map((category) => (
+                  <Button
+                    key={category}
+                    type="button"
+                    variant={selectedCategories.includes(category) ? "default" : "outline"}
+                    onClick={() => handleCategoryChange(category)}
+                    disabled={disabled || isSubmitting}
+                  >
+                    {category}
+                  </Button>
+                ))}
+                {isAddingCategory ? (
+                  <div className="relative">
+                    <Input
+                      type="text"
+                      value={newCategory}
+                      onChange={handleNewCategoryChange}
+                      onBlur={() => {
+                        setIsAddingCategory(false);
+                        setNewCategory("");
+                        setNewCategoryError("");
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddNewCategory();
+                        }
+                      }}
+                      placeholder="New Category"
+                      className="h-9"
+                      autoFocus
+                    />
+                    {newCategoryError && <p className="text-red-500 text-xs mt-1">{newCategoryError}</p>}
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIsAddingCategory(true)}
+                    disabled={disabled || isSubmitting}
+                    className="w-9 h-9"
+                  >
+                    +
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-700">Label</Label>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSplendidClick}
+                  disabled={disabled || isSubmitting}
+                  className="flex items-center gap-2"
+                >
+                  <Star className={cn("w-5 h-5 text-red-500", isSplendid && "fill-red-500")} />
+                  <span>Splendid</span>
+                </Button>
+              </div>
             </div>
 
             <div ref={tweetPreviewRef} className="mt-4" />
@@ -230,6 +365,29 @@ export default function TweetInputCard({
           </p>
         </CardContent>
       </Card>
+      {showConfetti && (
+        <Confetti
+          recycle={false}
+          numberOfPieces={200}
+          onConfettiComplete={() => setShowConfetti(false)}
+          drawShape={(ctx: CanvasRenderingContext2D) => {
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+              ctx.lineTo(
+                Math.cos(((18 + i * 72) * Math.PI) / 180) * 10,
+                -Math.sin(((18 + i * 72) * Math.PI) / 180) * 10
+              );
+              ctx.lineTo(
+                Math.cos(((54 + i * 72) * Math.PI) / 180) * 4,
+                -Math.sin(((54 + i * 72) * Math.PI) / 180) * 4
+              );
+            }
+            ctx.closePath();
+            ctx.fillStyle = "red";
+            ctx.fill();
+          }}
+        />
+      )}
     </motion.div>
   );
 }

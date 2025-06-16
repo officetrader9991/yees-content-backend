@@ -58,4 +58,8 @@ export interface Tweet {
     bookmarks: number
   }
   author_followers?: number
+  user_comment?: string
+  splendid_tweet?: boolean
+  target_audience?: string[]
+  difficulty?: string
 } 
