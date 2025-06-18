@@ -13,6 +13,73 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { supabase, Tweet } from "@/lib/supabase";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { TweetEditor } from "../TweetEditor";
+import { Label } from "@/components/ui/label";
+
+const AddTweetForm = ({ onTweetAdded }: { onTweetAdded: () => void }) => {
+  const [url, setUrl] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [success, setSuccess] = React.useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!url) {
+      setError("Please enter a tweet URL.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const response = await fetch('https://growlark.app.n8n.cloud/webhook/5f875500-1dcc-452e-a424-e63bcf20e05b', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+
+      if (response.ok) {
+        setSuccess("Tweet submitted for analysis! It will appear in the table shortly after processing.");
+        setUrl("");
+        // Refresh the table after a delay to allow for processing
+        setTimeout(onTweetAdded, 5000);
+      } else {
+        const body = await response.text();
+        setError(`Failed to submit tweet. Server responded with: ${body || response.statusText}`);
+      }
+    } catch (err) {
+      setError("An error occurred while submitting the tweet. See the console for details.");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Card className="mb-6">
+      <CardContent className="p-4">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex-grow w-full">
+            <Label htmlFor="tweet-url" className="sr-only">Tweet URL</Label>
+            <Input
+              id="tweet-url"
+              placeholder="Enter Tweet URL to add and analyze..."
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+          <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add New Tweet"}
+          </Button>
+        </form>
+        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+        {success && <p className="text-green-600 text-sm mt-2">{success}</p>}
+      </CardContent>
+    </Card>
+  );
+};
 
 export interface TweetDatabaseTableProps {
   className?: string;
@@ -23,15 +90,46 @@ export default function TweetDatabaseTable({
 }: TweetDatabaseTableProps) {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("all");
+  const [allCategories, setAllCategories] = React.useState<string[]>([]);
   const [tweets, setTweets] = React.useState<Tweet[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [selectedRows, setSelectedRows] = React.useState<string[]>([]);
+  const [editingTweetId, setEditingTweetId] = React.useState<string | null>(null);
 
   // Fetch tweets from Supabase
   React.useEffect(() => {
-    fetchTweets();
+    const initializeData = async () => {
+      await fetchTweets();
+      await fetchAllCategories();
+    };
+    initializeData();
   }, []);
+
+  const fetchAllCategories = async () => {
+    try {
+      const { data, error } = await supabase.from('tweets').select('category');
+
+      if (error) {
+        console.error('Error fetching all categories:', error);
+        return;
+      }
+
+      // The category can be a string or an array of strings. We need to handle both.
+      const categorySet = new Set<string>();
+      data.forEach(item => {
+        if (Array.isArray(item.category)) {
+          item.category.forEach(cat => cat && categorySet.add(cat));
+        } else if (typeof item.category === 'string') {
+          item.category && categorySet.add(item.category);
+        }
+      });
+
+      setAllCategories(Array.from(categorySet).sort());
+    } catch (err) {
+      console.error('Error processing categories:', err);
+    }
+  };
 
   const fetchTweets = async () => {
     try {
@@ -206,6 +304,8 @@ export default function TweetDatabaseTable({
         <p className="text-gray-600">Manage and explore all analyzed tweets in your database.</p>
       </header>
 
+      <AddTweetForm onTweetAdded={fetchTweets} />
+
       {selectedRows.length > 0 && (
         <div className="flex items-center gap-4 p-4 bg-gray-100 rounded-lg">
           <span className="text-sm font-semibold">{selectedRows.length} selected</span>
@@ -309,137 +409,172 @@ export default function TweetDatabaseTable({
                       <TableHead className="font-semibold text-gray-900 min-w-[150px]">Difficulty</TableHead>
                       <TableHead className="w-32 font-semibold text-gray-900 text-center">Engagement</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[100px]">Tweet URL</TableHead>
+                      <TableHead className="font-semibold text-gray-900">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredTweets.map((tweet) => (
-                      <TableRow key={tweet.id}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedRows.includes(tweet.id)}
-                            onCheckedChange={(checked) => handleRowSelect(tweet.id, !!checked)}
-                          />
-                        </TableCell>
-                        <TableCell>{tweet.scraped_at ? new Date(tweet.scraped_at).toLocaleDateString() : 'N/A'}</TableCell>
-                        <TableCell>
-                          {tweet.splendid_tweet && (
-                            <Star className="h-5 w-5 text-red-500 fill-red-500" />
-                          )}
-                        </TableCell>
-                        <TableCell className="font-medium text-gray-800">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <a
-                                  href={`https://twitter.com/${tweet.author_username}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="hover:underline"
-                                >
-                                  {tweet.author_username}
-                                </a>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>View Profile</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        </TableCell>
-                        <TableCell className="max-w-[350px] whitespace-normal">{tweet.first_tweet_text}</TableCell>
-                        <TableCell>
-                          {tweet.worth_posting_score != null ? (
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <Badge 
-                                  variant={tweet.worth_posting_score > 8 ? "default" : "secondary"}
-                                  className={cn(
-                                    {'bg-green-600 text-white': tweet.worth_posting_score > 8},
-                                    {'rainbow-glow-animation': tweet.worth_posting_score > 9}
+                      <React.Fragment key={tweet.id}>
+                        <TableRow>
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedRows.includes(tweet.id)}
+                              onCheckedChange={(checked) => handleRowSelect(tweet.id, !!checked)}
+                            />
+                          </TableCell>
+                          <TableCell>{tweet.scraped_at ? new Date(tweet.scraped_at).toLocaleDateString() : 'N/A'}</TableCell>
+                          <TableCell>
+                            {tweet.splendid_tweet && (
+                              <Star className="h-5 w-5 text-red-500 fill-red-500" />
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium text-gray-800">
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <a
+                                    href={`https://twitter.com/${tweet.author_username}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:underline"
+                                  >
+                                    {tweet.author_username}
+                                  </a>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>View Profile</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          </TableCell>
+                          <TableCell className="max-w-[350px] whitespace-normal">{tweet.first_tweet_text}</TableCell>
+                          <TableCell>
+                            {tweet.worth_posting_score != null ? (
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Badge 
+                                    variant={tweet.worth_posting_score > 8 ? "default" : "secondary"}
+                                    className={cn(
+                                      {'bg-green-600 text-white': tweet.worth_posting_score > 8},
+                                      {'rainbow-glow-animation': tweet.worth_posting_score > 9}
+                                    )}
+                                  >
+                                    {tweet.worth_posting_score}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {formatCommentForTooltip(tweet.worth_posting_comment)}
+                                </TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              'N/A'
+                            )}
+                          </TableCell>
+                          <TableCell className="max-w-[250px] whitespace-normal">{tweet.tweet_summary || 'N/A'}</TableCell>
+                          <TableCell className="max-w-[200px] whitespace-normal">{tweet.user_comment || ''}</TableCell>
+                          <TableCell>
+                            {chunk(tweet.tools_mentioned, 3).map((toolChunk, index) => (
+                              <div key={index} className="flex flex-wrap gap-1 mb-1 last:mb-0">
+                                {toolChunk.map(tool => (
+                                  <Badge key={tool} variant="secondary">{tool}</Badge>
+                                ))}
+                              </div>
+                            ))}
+                          </TableCell>
+                          <TableCell>
+                            {tweet.discovery_category && (
+                              <span>{discoveryCategoryDisplay[tweet.discovery_category] || tweet.discovery_category}</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {Array.isArray(tweet.category)
+                                ? chunk(tweet.category, 2).map((categoryChunk, idx) => (
+                                    <div key={idx} className="flex flex-wrap gap-1">
+                                      {categoryChunk.map((cat, index) => (
+                                        <Badge key={index} variant="secondary" className="font-normal">
+                                          {formatCategoryName(cat)}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  ))
+                                : tweet.category && (
+                                    <Badge variant="secondary" className="font-normal">
+                                      {formatCategoryName(tweet.category)}
+                                    </Badge>
                                   )}
-                                >
-                                  {tweet.worth_posting_score}
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {formatCommentForTooltip(tweet.worth_posting_comment)}
-                              </TooltipContent>
-                            </Tooltip>
-                          ) : (
-                            'N/A'
-                          )}
-                        </TableCell>
-                        <TableCell className="max-w-[250px] whitespace-normal">{tweet.tweet_summary || 'N/A'}</TableCell>
-                        <TableCell className="max-w-[200px] whitespace-normal">{tweet.user_comment || ''}</TableCell>
-                        <TableCell>
-                          {chunk(tweet.tools_mentioned, 3).map((toolChunk, index) => (
-                            <div key={index} className="flex flex-wrap gap-1 mb-1 last:mb-0">
-                              {toolChunk.map(tool => (
-                                <Badge key={tool} variant="secondary">{tool}</Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-1">
+                              {tweet.target_audience?.map(audience => (
+                                <span key={audience}>{audienceDisplay[audience] || audience}</span>
                               ))}
                             </div>
-                          ))}
-                        </TableCell>
-                        <TableCell>
-                          {tweet.discovery_category && (
-                            <span>{discoveryCategoryDisplay[tweet.discovery_category] || tweet.discovery_category}</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {Array.isArray(tweet.category)
-                              ? chunk(tweet.category, 2).map((categoryChunk, idx) => (
-                                  <div key={idx} className="flex flex-wrap gap-1">
-                                    {categoryChunk.map((cat, index) => (
-                                      <Badge key={index} variant="secondary" className="font-normal">
-                                        {formatCategoryName(cat)}
-                                      </Badge>
-                                    ))}
-                                  </div>
-                                ))
-                              : tweet.category && (
-                                  <Badge variant="secondary" className="font-normal">
-                                    {formatCategoryName(tweet.category)}
-                                  </Badge>
-                                )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col gap-1">
-                            {tweet.target_audience?.map(audience => (
-                              <span key={audience}>{audienceDisplay[audience] || audience}</span>
-                            ))}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {tweet.difficulty && (
-                            <span>{difficultyDisplay[tweet.difficulty] || tweet.difficulty}</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex justify-center items-center gap-3 text-sm">
-                            <div className="flex items-center gap-1">
-                              <Heart className="h-4 w-4 text-red-500" />
-                              <span className="font-medium">{tweet.favourite_count?.toLocaleString() || 0}</span>
+                          </TableCell>
+                          <TableCell>
+                            {tweet.difficulty && (
+                              <span>{difficultyDisplay[tweet.difficulty] || tweet.difficulty}</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex justify-center items-center gap-3 text-sm">
+                              <div className="flex items-center gap-1">
+                                <Heart className="h-4 w-4 text-red-500" />
+                                <span className="font-medium">{tweet.favourite_count?.toLocaleString() || 0}</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Eye className="h-4 w-4 text-purple-500" />
+                                <span className="font-medium">{tweet.views?.toLocaleString() || 0}</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Eye className="h-4 w-4 text-purple-500" />
-                              <span className="font-medium">{tweet.views?.toLocaleString() || 0}</span>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {tweet.tweet_url ? (
-                            <Button variant="outline" size="sm" asChild className="h-8 text-xs">
-                              <a href={tweet.tweet_url} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-3 w-3 mr-1" />
-                                View Tweet
-                              </a>
+                          </TableCell>
+                          <TableCell>
+                            {tweet.tweet_url ? (
+                              <Button variant="outline" size="sm" asChild className="h-8 text-xs">
+                                <a href={tweet.tweet_url} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="h-3 w-3 mr-1" />
+                                  View Tweet
+                                </a>
+                              </Button>
+                            ) : (
+                              <span className="text-gray-400 italic text-xs">No URL</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setEditingTweetId(editingTweetId === tweet.id ? null : tweet.id)}
+                            >
+                              {editingTweetId === tweet.id ? 'Cancel' : 'Edit'}
                             </Button>
-                          ) : (
-                            <span className="text-gray-400 italic text-xs">No URL</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
+                          </TableCell>
+                        </TableRow>
+                        {editingTweetId === tweet.id && (
+                          <TableRow>
+                            <TableCell colSpan={16}>
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.3 }}
+                              >
+                                <TweetEditor
+                                  tweet={tweet}
+                                  allCategories={allCategories}
+                                  onUpdate={() => {
+                                    setEditingTweetId(null);
+                                    fetchTweets();
+                                    fetchAllCategories();
+                                  }}
+                                  onCancel={() => setEditingTweetId(null)}
+                                />
+                              </motion.div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
                     ))}
                   </TableBody>
                 </Table>
