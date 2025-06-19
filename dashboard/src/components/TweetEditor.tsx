@@ -40,6 +40,7 @@ export const TweetEditor: React.FC<TweetEditorProps> = ({ tweet, allCategories, 
   const [worthPostingScore, setWorthPostingScore] = useState(tweet.worth_posting_score || 0);
   const [userComment, setUserComment] = useState(tweet.user_comment || '');
   const [splendidTweet, setSplendidTweet] = useState(tweet.splendid_tweet || false);
+  const [goodTweet, setGoodTweet] = useState(tweet.good_tweet || false);
   const [categories, setCategories] = useState<string[]>(normalizeToArray(tweet.category));
   const [targetAudience, setTargetAudience] = useState<string[]>(normalizeToArray(tweet.target_audience));
   const [difficulty, setDifficulty] = useState(tweet.difficulty || '');
@@ -57,6 +58,7 @@ export const TweetEditor: React.FC<TweetEditorProps> = ({ tweet, allCategories, 
       worth_posting_score: Number(worthPostingScore),
       user_comment: userComment,
       splendid_tweet: splendidTweet,
+      good_tweet: goodTweet,
       category: categories.join(', '),
       target_audience: targetAudience,
       difficulty: difficulty,
@@ -204,6 +206,10 @@ export const TweetEditor: React.FC<TweetEditorProps> = ({ tweet, allCategories, 
             <div className="flex items-center gap-2 pt-4">
               <Checkbox id="splendid_tweet" checked={splendidTweet} onCheckedChange={checked => setSplendidTweet(!!checked)} />
               <Label htmlFor="splendid_tweet">Splendid Tweet? ✨</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox id="good_tweet" checked={goodTweet} onCheckedChange={checked => setGoodTweet(!!checked)} />
+              <Label htmlFor="good_tweet">Good Tweet? ⭐</Label>
             </div>
           </div>
         </div>
