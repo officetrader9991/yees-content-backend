@@ -60,6 +60,7 @@ export interface Tweet {
   author_followers?: number
   user_comment?: string
   splendid_tweet?: boolean
+  good_tweet?: boolean
   target_audience?: string[]
   difficulty?: string
   discovery_category?: string

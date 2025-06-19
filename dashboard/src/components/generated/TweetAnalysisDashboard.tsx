@@ -55,7 +55,7 @@ export default function TweetAnalysisDashboard({
     fetchCategories();
   }, []);
 
-  const handleTweetSubmit = async (url: string, comment: string, categories: string[], isSplendid: boolean) => {
+  const handleTweetSubmit = async (url: string, comment: string, categories: string[], isSplendid: boolean, isGood: boolean) => {
     setOrders(prevOrders => [...prevOrders, { url, status: "Analyzing" }]);
     setIsAnalyzing(true);
     
@@ -65,7 +65,7 @@ export default function TweetAnalysisDashboard({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url, comment, categories, splendid_tweet: isSplendid }),
+        body: JSON.stringify({ url, comment, categories, splendid_tweet: isSplendid, good_tweet: isGood }),
       });
 
       if (response.ok) {
@@ -152,7 +152,7 @@ export default function TweetAnalysisDashboard({
                       <TweetInputCard
                         value={tweetUrl}
                         onValueChange={setTweetUrl}
-                        onSubmit={(url, comment, categories, isSplendid) => handleTweetSubmit(url, comment, categories, isSplendid)}
+                        onSubmit={(url, comment, categories, isSplendid, isGood) => handleTweetSubmit(url, comment, categories, isSplendid, isGood)}
                         onValidUrl={handleSimilarityCheck}
                         allCategories={allCategories}
                         onNewCategory={ (newCategory: string) => {

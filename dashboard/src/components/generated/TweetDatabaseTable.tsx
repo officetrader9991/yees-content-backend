@@ -397,6 +397,7 @@ export default function TweetDatabaseTable({
                       </TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[120px]">Scraped Date</TableHead>
                       <TableHead className="w-16 font-semibold text-gray-900">Splendid</TableHead>
+                      <TableHead className="font-semibold text-gray-900 min-w-[120px]">Good</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[120px]">Author</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[350px]">Tweet Text</TableHead>
                       <TableHead className="font-semibold text-gray-900 min-w-[100px]">Score</TableHead>
@@ -426,6 +427,11 @@ export default function TweetDatabaseTable({
                           <TableCell>
                             {tweet.splendid_tweet && (
                               <Star className="h-5 w-5 text-red-500 fill-red-500" />
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {tweet.good_tweet && (
+                              <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
                             )}
                           </TableCell>
                           <TableCell className="font-medium text-gray-800">

@@ -1,0 +1,132 @@
+[
+    {
+      "id": "gen-1750088565-bLVokpQkiAxVXVy77mEh",
+      "provider": "Perplexity",
+      "model": "perplexity/sonar",
+      "object": "chat.completion",
+      "created": 1750088568,
+      "choices": [
+        {
+          "logprobs": null,
+          "finish_reason": "stop",
+          "native_finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "Here is a structured analysis of the viral tweet in JSON format:\n\n```json\n{\n  \"verification_status\": \"unverified\",\n  \"existence_check\": \"No evidence of existence\",\n  \"summary\": \"The tweet claims that a tool named @Rocketdotnew can build full-stack apps, internal tools, and landing pages faster than most dev teams. However, there is no evidence of the tool's existence or functionality as claimed.\",\n  \"verified_facts\": [],\n  \"unverified_claims\": [\n    \"The tool can build full-stack apps, internal tools, and landing pages faster than most dev teams.\",\n    \"Users can import Figma files for code conversion and download or publish the code.\",\n    \"The tool allows customization of frameworks\"\n  ],\n  \"red_flags\": [\n    \"Lack of official website or documentation\",\n    \"No user reviews or testimonials available\",\n    \"No clear evidence of the tool's functionality\"\n  ],\n  \"tools_mentioned\": [\n    {\n      \"name\": \"@Rocketdotnew\",\n      \"status\": \"unknown/unavailable\",\n      \"official_url\": \"Not found\",\n      \"pricing\": \"Not available\"\n    },\n    {\n      \"name\": \"Lovable\",\n      \"status\": \"active\",\n      \"official_url\": \"https://lovable.dev/,\n      \"pricing\": \"Not specified\"\n    },\n    {\n      \"name\": \"ROQ.ai\",\n      \"status\": \"active\",\n      \"official_url\": \"https://www.roq.ai/\",\n      \"pricing\": \"Not specified\"\n    }\n  ],\n  \"competitor_comparison\": {\n    \"established_alternatives\": [\"Lovable\", \"ROQ.ai\"],\n    \"key_differences\": \"The tweet claims @Rocketdotnew provides rapid app development, similar to Lovable and ROQ.ai, but lacks specific details on how it outperforms them.\"\n  },\n  \"user_evidence\": [],\n  \"official_sources\": [],\n  \"related_context\": [\n    \"The market for AI app builders is rapidly evolving with tools like Lovable and ROQ.ai offering similar functionalities.\",\n    \"Viral tweets can significantly impact the visibility and adoption of new tech tools.\"\n  ],\n  \"blog_angle_suggestions\": [\n    \"Analysis of the viral tweet's claims against existing AI app builders.\",\n    \"Exploring the potential impact of viral marketing on tech startups.\"\n  ]\n}\n```\n\n### Key Points for a Well-Informed Blog Post\n\n1. **Existence and Functionality**: The tool @Rocketdotnew is not verified to exist or function as claimed. Without an official website or user reviews, it's difficult to assess its capabilities.\n\n2. **Competitive Landscape**: Tools like Lovable and ROQ.ai offer similar AI-driven app building capabilities, making it essential to compare functionalities and user experiences.\n\n3. **Red Flags**: The lack of transparency and evidence raises concerns about potential marketing hype or misleading claims.\n\n4. **Story Angles**: \n   - **Critical Analysis**: Investigate if such tools can deliver on their promises and how they compare to established alternatives.\n   - **Market Impact**: Discuss how viral tweets influence tech adoption and startup visibility. \n\n5. **Evidence-Based Insights**: For credibility, focus on verifiable facts and user reviews from established platforms, highlighting the potential risks of unverified claims.",
+            "refusal": null,
+            "reasoning": null,
+            "annotations": [
+              {
+                "type": "url_citation",
+                "url_citation": {
+                  "end_index": 0,
+                  "start_index": 0,
+                  "title": "www.create.xyz/",
+                  "url": "https://www.create.xyz"
+                }
+              },
+              {
+                "type": "url_citation",
+                "url_citation": {
+                  "end_index": 0,
+                  "start_index": 0,
+                  "title": "dify.ai/",
+                  "url": "https://dify.ai"
+                }
+              },
+              {
+                "type": "url_citation",
+                "url_citation": {
+                  "end_index": 0,
+                  "start_index": 0,
+                  "title": "pebblely.com/",
+                  "url": "https://pebblely.com"
+                }
+              },
+              {
+                "type": "url_citation",
+                "url_citation": {
+                  "end_index": 0,
+                  "start_index": 0,
+                  "title": "guides.lib.purdue.edu/c.php",
+                  "url": "https://guides.lib.purdue.edu/c.php?g=1371380&p=10135074"
+                }
+              },
+              {
+                "type": "url_citation",
+                "url_citation": {
+                  "end_index": 0,
+                  "start_index": 0,
+                  "title": "writesonic.com/",
+                  "url": "https://writesonic.com"
+                }
+              },
+              {
+                "type": "url_citation",
+                "url_citation": {
+                  "end_index": 0,
+                  "start_index": 0,
+                  "title": "Lovable",
+                  "url": "https://lovable.dev/?utm_source=consumerstartupsnewsletter&amp;utm_medium=email",
+                  "content": "## Build something Lovable\n\nCreate apps and websites by chatting with AI"
+                }
+              },
+              {
+                "type": "url_citation",
+                "url_citation": {
+                  "end_index": 0,
+                  "start_index": 0,
+                  "title": "ROQ.ai - Build your SaaS web app with prompts in 5 minutes",
+                  "url": "https://www.roq.ai/",
+                  "content": " We'll generate and deploy a fully working app with the most popular stack in 2023: Built with ROQ Your first AI powered SaaS webapp builder Generate Describe your project by using prompts, get a deployed prototype in &lt;10 minutes and push the source code to your repository. Develop Accelerate your development project by leveraging your generated prototype and ROQ's pre-integrated features. Launch Launch your finished SaaS application weeks earlier and with more features from day one. Your app comes fully loaded, and you get the source code* DB Schema REST API Full wired create and update forms List views for your DB entities Registration &amp; login User Management Roles &amp; Access Management Notifications, Emails &amp; SMS In-App Chat File Uploads * App source code included in downloadable app repository for DB schema, REST API, forms, lists &amp; tables. The other features are powered by the headless ROQ Platform and fully wired up in your app code."
+                }
+              },
+              {
+                "type": "url_citation",
+                "url_citation": {
+                  "end_index": 0,
+                  "start_index": 0,
+                  "title": "How a Tweet Took Rork From Debt to $2.8m",
+                  "url": "https://autogpt.net/how-a-tweet-took-rork-from-debt-to-2-8m/",
+                  "content": "Despite their struggles, they continued working on their startup. Then, one viral tweet changed everything. The Tweet That Sparked It All On February 24, 2025, investor Matt Shumer shared a post about Rork. He praised the platform’s ability to build iOS apps from simple text prompts. He also included a demo video and compared the platform to a competitor, Bolt."
+                }
+              },
+              {
+                "type": "url_citation",
+                "url_citation": {
+                  "end_index": 0,
+                  "start_index": 0,
+                  "title": "Firebase Studio vs. Bolt.new vs. Lovable: The Ultimate Showdown for AI App Builders in 2025",
+                  "url": "https://medium.com/@ferreradaniel/firebase-studio-vs-bolt-new-vs-lovable-the-ultimate-showdown-for-ai-app-builders-in-2025-cae8046d3eab",
+                  "content": "But hype is one thing; results are another. Which one _actually_ delivers? Stick around as we dive deep into a head-to-head comparison based on real-world tests. We pushed these platforms to build both a simple recipe app and a more complex AI-driven SEO tool. We’ll unpack what worked, what flopped, and ultimately, help you decide which AI app builder might be your perfect match in this rapidly evolving tech landscape."
+                }
+              },
+              {
+                "type": "url_citation",
+                "url_citation": {
+                  "end_index": 0,
+                  "start_index": 0,
+                  "title": "Lovable vs Vercel v0.dev: Which AI Tool Builds Better Websites?",
+                  "url": "https://medium.com/@huzaifazahoor654/lovable-vs-vercel-v0-dev-which-ai-tool-builds-better-websites-a9a3e4277bb7",
+                  "content": "Which one fits your needs? We tested both tools and created real websites to help you decide. vercel vs lovable\n\n## Why AI Tools Like Lovable and v0.dev Are Game Changers\n\nWe no longer need to write every line of code by hand. These tools let us:\n\n- Generate full websites using simple text\n- Build fast, SEO-friendly pages\n- Deploy to the web with one click\n\nIt saves time. It saves money."
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "citations": [
+        "https://www.create.xyz",
+        "https://dify.ai",
+        "https://pebblely.com",
+        "https://guides.lib.purdue.edu/c.php?g=1371380&p=10135074",
+        "https://writesonic.com"
+      ],
+      "usage": {
+        "prompt_tokens": 2554,
+        "completion_tokens": 676,
+        "total_tokens": 3230
+      }
+    }
+  ]

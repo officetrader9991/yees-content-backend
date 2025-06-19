@@ -1,0 +1,81 @@
+✅ SEO Blog Post Requirements (to Rank High)
+1. 🧠 Keyword Relevance & Intent
+Target keywords must be naturally used throughout the post (not keyword stuffing).
+**Keyword Placement**: Integrate the primary keyword within the first 100-150 words, in at least one `H2` heading, and in the final paragraph.
+
+Match search intent (informational, transactional, navigational).
+
+Use tools like Google Trends, Ahrefs, or SEMrush (or fetch keywords from Perplexity) to identify related keywords and LSI (Latent Semantic Indexing) terms.
+
+2. 🧱 Content Structure
+Use proper heading hierarchy:
+
+H1: Main title (only one)
+
+H2: Section headings
+
+H3: Sub-points under sections
+
+**Featured Snippet Optimization**: Structure content to answer specific questions directly. Use headings like "What is..." or "How to..." to capture snippet opportunities.
+
+Short paragraphs (2–4 sentences max)
+
+Use bullet points, bold text, and numbered lists for clarity
+
+3. ✍️ Meta Elements
+Title: Under 60 characters; includes primary keyword
+
+Meta description: 140–160 characters; enticing, with keyword
+
+URL slug: Simple, readable, keyword-focused
+
+4. 📖 Content Quality & Length
+At least 800–1200 words for basic ranking; longer is better for competitive topics (1500–2500)
+
+Unique, non-AI-sounding (though it's AI-written, should feel human)
+
+**E-E-A-T (Experience, Expertise, Authoritativeness, Trust)**: Content must be credible.
+- Attribute content to a real author with a bio.
+- Back up claims with links to reputable sources or data.
+- Demonstrate first-hand experience where possible.
+
+Backed by facts, examples, external links if necessary
+
+Use actual use cases or step-by-step breakdowns when possible
+
+5. 🔁 Internal & External Links
+Link to relevant internal pages (e.g. product, about, category)
+
+Include 1–2 high-quality outbound links (e.g. GitHub repo, Figma, Wikipedia)
+
+6. 🎯 Call to Action (CTA)
+End the post with a clear action (e.g. "Try Rocket today", "Follow for more tools", "Leave a comment")
+
+7. 📱 Readability
+Write at Grade 7–9 reading level
+
+Avoid jargon unless the target audience is expert-level
+
+Use active voice and engaging tone
+
+8. 📷 Media (Optional but Helpful)
+Include images or diagrams (can be added later)
+
+Add alt text for all media for accessibility + SEO
+
+**Descriptive Filenames**: Use keyword-rich filenames for images (e.g., `seo-best-practices.jpg` instead of `IMG_1234.jpg`).
+
+✅ Optional (but Good for SEO)
+Include a FAQ section using common queries (for Google rich snippets)
+
+Use schema.org structured data (later on your CMS)
+
+---
+**Advanced SEO Strategies**
+
+- **Topic Clusters**: Build authority by creating a main "pillar" article that links out to several related, in-depth "cluster" articles. Those cluster articles should link back to the pillar.
+- **Content Freshness**: Periodically review and update existing posts with new information, stats, and links to keep them relevant.
+- **User Experience (Writer's Contribution)**: While technical, writers can help by:
+  - Keeping content scannable and mobile-friendly.
+  - Using compressed images to avoid slowing down page load time.
+  - Limiting intrusive elements that disrupt the reader.

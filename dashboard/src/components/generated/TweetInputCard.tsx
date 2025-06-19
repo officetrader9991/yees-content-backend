@@ -22,7 +22,7 @@ declare global {
 export interface TweetInputCardProps {
   value?: string;
   onValueChange?: (value: string) => void;
-  onSubmit?: (url: string, comment: string, categories: string[], isSplendid: boolean) => void;
+  onSubmit?: (url: string, comment: string, categories: string[], isSplendid: boolean, isGood: boolean) => void;
   isLoading?: boolean;
   disabled?: boolean;
   onValidUrl?: (url: string) => void;
@@ -44,6 +44,7 @@ export default function TweetInputCard({
   const [comment, setComment] = React.useState("");
   const [selectedCategories, setSelectedCategories] = React.useState<string[]>([]);
   const [isSplendid, setIsSplendid] = React.useState(false);
+  const [isGood, setIsGood] = React.useState(false);
   const [showConfetti, setShowConfetti] = React.useState(false);
   const [isAddingCategory, setIsAddingCategory] = React.useState(false);
   const [newCategory, setNewCategory] = React.useState("");
@@ -120,6 +121,10 @@ export default function TweetInputCard({
     setNewCategoryError("");
   };
 
+  const handleGoodClick = () => {
+    setIsGood(!isGood);
+  };
+
   const handleSplendidClick = () => {
     const newIsSplendid = !isSplendid;
     setIsSplendid(newIsSplendid);
@@ -156,7 +161,7 @@ export default function TweetInputCard({
       setErrorMessage("");
 
       try {
-        onSubmit?.(inputValue, comment, selectedCategories, isSplendid);
+        onSubmit?.(inputValue, comment, selectedCategories, isSplendid, isGood);
         setSubmissionState("success");
 
         setTimeout(() => {
@@ -229,6 +234,37 @@ export default function TweetInputCard({
               />
             </div>
 
+            <div className="flex items-center space-x-4">
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <Button
+                  type="button"
+                  onClick={handleSplendidClick}
+                  className={cn(
+                    "flex items-center gap-2 transition-all duration-300",
+                    isSplendid ? "bg-red-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  )}
+                  disabled={disabled || isSubmitting}
+                >
+                  <Star className={cn("w-5 h-5 transition-all duration-300", isSplendid ? "text-white" : "text-red-500")} />
+                  <span>Splendid</span>
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                <Button
+                  type="button"
+                  onClick={handleGoodClick}
+                  className={cn(
+                    "flex items-center gap-2 transition-all duration-300",
+                    isGood ? "bg-yellow-400 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  )}
+                  disabled={disabled || isSubmitting}
+                >
+                  <Star className={cn("w-5 h-5 transition-all duration-300", isGood ? "text-white" : "text-yellow-400")} />
+                  <span>Good</span>
+                </Button>
+              </motion.div>
+            </div>
+
             <div className="space-y-3">
               <Label className="text-sm font-medium text-gray-700">
                 Category
@@ -251,141 +287,107 @@ export default function TweetInputCard({
                       type="text"
                       value={newCategory}
                       onChange={handleNewCategoryChange}
-                      onBlur={() => {
-                        setIsAddingCategory(false);
-                        setNewCategory("");
-                        setNewCategoryError("");
-                      }}
+                      onBlur={handleAddNewCategory}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddNewCategory();
+                        if (e.key === 'Enter') handleAddNewCategory();
+                        if (e.key === 'Escape') {
+                          setIsAddingCategory(false);
+                          setNewCategory('');
+                          setNewCategoryError('');
                         }
                       }}
                       placeholder="New Category"
                       className="h-9"
                       autoFocus
                     />
-                    {newCategoryError && <p className="text-red-500 text-xs mt-1">{newCategoryError}</p>}
+                    {newCategoryError && (
+                      <p className="absolute text-xs text-red-500 -bottom-5 left-0">
+                        {newCategoryError}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <Button
                     type="button"
-                    variant="outline"
-                    size="icon"
+                    variant="ghost"
                     onClick={() => setIsAddingCategory(true)}
                     disabled={disabled || isSubmitting}
-                    className="w-9 h-9"
                   >
-                    +
+                    + Add New
                   </Button>
                 )}
               </div>
             </div>
-
-            <div className="space-y-3">
-              <Label className="text-sm font-medium text-gray-700">Label</Label>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleSplendidClick}
-                  disabled={disabled || isSubmitting}
-                  className="flex items-center gap-2"
-                >
-                  <Star className={cn("w-5 h-5 text-red-500", isSplendid && "fill-red-500")} />
-                  <span>Splendid</span>
-                </Button>
-              </div>
-            </div>
-
-            <div ref={tweetPreviewRef} className="mt-4" />
-
-            <div className="flex justify-end">
+            
+            <div className="pt-4 flex flex-col items-center gap-4">
               <Button
                 type="submit"
-                disabled={!inputValue.trim() || isSubmitting || disabled || !validateTweetUrl(inputValue)}
+                disabled={disabled || isSubmitting || !inputValue.trim()}
                 className={cn(
-                  "px-8 py-3 h-12 font-medium rounded-xl",
-                  "focus:ring-2 focus:ring-offset-2",
-                  "disabled:opacity-50 disabled:cursor-not-allowed",
-                  "transition-all duration-200 shadow-md hover:shadow-lg",
-                  "flex items-center gap-2",
-                  submissionState === "success" && "bg-green-600 hover:bg-green-700 focus:ring-green-500",
-                  submissionState === "error" && "bg-red-600 hover:bg-red-700 focus:ring-red-500",
-                  submissionState === "idle" && "bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500",
-                  submissionState === "loading" && "bg-blue-600 text-white"
+                  "w-full h-14 text-lg font-bold rounded-xl text-white transition-all duration-300 ease-in-out",
+                  "bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700",
+                  "shadow-lg hover:shadow-xl transform hover:-translate-y-0.5",
+                  (disabled || isSubmitting || !inputValue.trim()) && "opacity-60 cursor-not-allowed shadow-none transform-none"
                 )}
               >
-                {submissionState === "loading" ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Sending...</span>
-                  </>
-                ) : submissionState === "success" ? (
-                  <>
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Success!</span>
-                  </>
-                ) : submissionState === "error" ? (
-                  <>
-                    <AlertCircle className="w-4 h-4" />
-                    <span>Try Again</span>
-                  </>
+                {isSubmitting ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    style={{
+                      width: 24,
+                      height: 24,
+                      border: "4px solid rgba(255, 255, 255, 0.3)",
+                      borderTopColor: "white",
+                      borderRadius: "50%",
+                    }}
+                  />
                 ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    <span>Submit</span>
-                  </>
+                  <div className="flex items-center gap-2">
+                    <Send className="w-5 h-5" />
+                    <span>Submit Tweet</span>
+                  </div>
                 )}
               </Button>
+              {submissionState === "success" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center text-green-600"
+                >
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  <p>Tweet submitted successfully!</p>
+                </motion.div>
+              )}
+              {submissionState === "error" && errorMessage && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center text-red-600"
+                >
+                  <AlertCircle className="w-5 h-5 mr-2" />
+                  <p>{errorMessage}</p>
+                </motion.div>
+              )}
             </div>
           </form>
 
-          {errorMessage && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4" />
-                {errorMessage}
-              </p>
+          {tweetId && (
+            <div className="mt-6">
+              <div ref={tweetPreviewRef} />
             </div>
           )}
-
-          {submissionState === "success" && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-sm text-green-600 flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" />
-                Tweet URL successfully sent for processing!
-              </p>
-            </div>
-          )}
-
-          <p id="tweet-url-description" className="text-sm text-gray-500 leading-relaxed">
-            Enter a single tweet URL to be sent to our AI workflow for analysis and categorization.
-          </p>
         </CardContent>
       </Card>
+
       {showConfetti && (
         <Confetti
+          width={window.innerWidth}
+          height={window.innerHeight}
           recycle={false}
-          numberOfPieces={200}
+          numberOfPieces={400}
+          gravity={0.15}
           onConfettiComplete={() => setShowConfetti(false)}
-          drawShape={(ctx: CanvasRenderingContext2D) => {
-            ctx.beginPath();
-            for (let i = 0; i < 5; i++) {
-              ctx.lineTo(
-                Math.cos(((18 + i * 72) * Math.PI) / 180) * 10,
-                -Math.sin(((18 + i * 72) * Math.PI) / 180) * 10
-              );
-              ctx.lineTo(
-                Math.cos(((54 + i * 72) * Math.PI) / 180) * 4,
-                -Math.sin(((54 + i * 72) * Math.PI) / 180) * 4
-              );
-            }
-            ctx.closePath();
-            ctx.fillStyle = "red";
-            ctx.fill();
-          }}
         />
       )}
     </motion.div>
