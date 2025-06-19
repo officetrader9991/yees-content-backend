@@ -6,7 +6,6 @@ import { Textarea } from './ui/textarea';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { ChevronsUpDown, X, Plus } from 'lucide-react';
@@ -253,29 +252,33 @@ export const TweetEditor: React.FC<TweetEditorProps> = ({ tweet, allCategories =
           <div className="space-y-6">
             <div>
               <Label htmlFor="difficulty">Difficulty</Label>
-              <Select value={difficulty} onValueChange={setDifficulty} disabled={isSaving}>
-                <SelectTrigger id="difficulty" className="mt-1">
-                  <SelectValue placeholder="Select difficulty" />
-                </SelectTrigger>
-                <SelectContent>
-                  {difficultyLevels.map(level => (
-                    <SelectItem key={level} value={level}>{level}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select 
+                id="difficulty" 
+                value={difficulty} 
+                onChange={(e) => setDifficulty(e.target.value)}
+                disabled={isSaving}
+                className="w-full mt-1 px-3 py-2 border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-md"
+              >
+                <option value="">Select difficulty</option>
+                {difficultyLevels.map(level => (
+                  <option key={level} value={level}>{level}</option>
+                ))}
+              </select>
             </div>
             <div>
               <Label htmlFor="discovery_category">Discovery Category</Label>
-              <Select value={discoveryCategory} onValueChange={setDiscoveryCategory} disabled={isSaving}>
-                <SelectTrigger id="discovery_category" className="mt-1">
-                  <SelectValue placeholder="Select discovery category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {discoveryCategories.map(cat => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select 
+                id="discovery_category" 
+                value={discoveryCategory} 
+                onChange={(e) => setDiscoveryCategory(e.target.value)}
+                disabled={isSaving}
+                className="w-full mt-1 px-3 py-2 border border-input bg-background text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 rounded-md"
+              >
+                <option value="">Select discovery category</option>
+                {discoveryCategories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             </div>
             <div className="flex items-center gap-2 pt-4">
               <Checkbox 
