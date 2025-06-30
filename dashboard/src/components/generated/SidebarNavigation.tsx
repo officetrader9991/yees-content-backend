@@ -2,15 +2,15 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Home, FileText, History, Settings, HelpCircle, Twitter, Languages } from "lucide-react";
+import { Home, FileText, History, Settings, HelpCircle, Twitter, Languages, PenTool } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 export interface SidebarNavigationProps {
-  activeItem?: "home" | "submit" | "database" | "repost" | "seo-articles" | "threads" | "voiceover" | "translator";
+  activeItem?: "home" | "submit" | "database" | "repost" | "seo-articles" | "threads" | "voiceover" | "translator" | "article-input";
   collapsed?: boolean;
-  onNavigate?: (item: "home" | "submit" | "database" | "repost" | "settings" | "help" | "seo-articles" | "threads" | "voiceover" | "translator") => void;
+  onNavigate?: (item: "home" | "submit" | "database" | "repost" | "settings" | "help" | "seo-articles" | "threads" | "voiceover" | "translator" | "article-input") => void;
 }
 export default function SidebarNavigation({
   activeItem = "submit",
@@ -44,7 +44,7 @@ export default function SidebarNavigation({
     icon: HelpCircle
   }];
   const handleNavigation = (itemId: string) => {
-    onNavigate?.(itemId as "home" | "submit" | "database" | "repost" | "settings" | "help" | "seo-articles" | "threads" | "voiceover" | "translator");
+    onNavigate?.(itemId as "home" | "submit" | "database" | "repost" | "settings" | "help" | "seo-articles" | "threads" | "voiceover" | "translator" | "article-input");
   };
   return <TooltipProvider>
       <motion.nav className={cn("flex flex-col h-full bg-gray-50 border-r border-gray-200 transition-all duration-300", collapsed ? "w-16" : "w-64")} initial={{
@@ -95,6 +95,10 @@ export default function SidebarNavigation({
 
           {/* Custom Action Buttons Below Ready to Repost */}
           <div className="mt-2 flex flex-col gap-3 px-3" aria-label="Sidebar Actions">
+            <button type="button" onClick={() => handleNavigation("article-input")} className="flex items-center gap-3 rounded-xl px-4 py-3 bg-gradient-to-r from-orange-100 to-orange-50 hover:from-orange-200 hover:to-orange-100 text-orange-800 font-semibold shadow-sm border border-orange-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2" aria-label="Article Input" tabIndex={0}>
+              <PenTool className="w-5 h-5 text-orange-500" />
+              {!collapsed && <span className="truncate">Article Input</span>}
+            </button>
             <button type="button" onClick={() => handleNavigation("seo-articles")} className="flex items-center gap-3 rounded-xl px-4 py-3 bg-gradient-to-r from-blue-100 to-blue-50 hover:from-blue-200 hover:to-blue-100 text-blue-800 font-semibold shadow-sm border border-blue-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2" aria-label="Analyze Engagement" tabIndex={0}>
               <svg aria-hidden="true" className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 20v-6m0 0V4m0 10l-3-3m3 3l3-3" strokeLinecap="round" strokeLinejoin="round" /></svg>
               {!collapsed && <span className="truncate">SEO Articles</span>}
